@@ -29,6 +29,27 @@ export const CreateProductBodyStruct = object({
 
 export type CreateProductBody = Infer<typeof CreateProductBodyStruct>;
 
+export const PatchProductBodyStruct = object({
+  name: optional(string()),
+  price: optional(number()),
+  content: optional(string()),
+  image: optional(string()),
+  discountRate: optional(number()),
+  discountStartTime: optional(date()),
+  discountEndTime: optional(date()),
+  categoryName: optional(string()),
+  stocks: optional(
+    array(
+      object({
+        sizeId: string(),
+        quantity: number(),
+      })
+    )
+  ),
+});
+
+export type PatchProductBody = Infer<typeof PatchProductBodyStruct>;
+
 export const ProductListParamsStruct = object({
   page: defaulted(integerString, 1),
   pageSize: defaulted(integerString, 16),

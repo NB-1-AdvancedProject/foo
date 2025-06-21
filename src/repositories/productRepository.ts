@@ -1,6 +1,5 @@
 import { Prisma } from "@prisma/client";
 import prisma from "../lib/prisma";
-import { ProductListDTO } from "../lib/dto/productDTO";
 
 async function create(data: Prisma.ProductCreateInput) {
   return await prisma.product.create({
@@ -36,6 +35,24 @@ async function findAllProductCount(where: Prisma.ProductWhereInput) {
   return await prisma.product.count({ where });
 }
 
+async function updateProductWithStocks(
+  tx: Prisma.TransactionClient,
+  data: Prisma.ProductUpdateInput,
+  productId: string
+) {
+  return await tx.product.update({
+    where: { id: productId },
+    data: data,
+    include: {
+      category: true,
+      store: true,
+      stocks: true,
+      reviews: true,
+      inquiries: true,
+    },
+  });
+}
+
 async function deleteById(productId: string) {
   return await prisma.product.delete({
     where: { id: productId },
@@ -47,5 +64,6 @@ export default {
   findProductById,
   findAllProducts,
   findAllProductCount,
+  updateProductWithStocks,
   deleteById,
 };

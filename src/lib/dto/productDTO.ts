@@ -39,55 +39,67 @@ export class DetailProductResponseDTO {
   }
 }
 
-export class ProductListDTO {
-  products: {
-    id: string;
-    name: string;
-    price: number;
-    image: string;
-    content: string;
-    categoryId: string;
-    storeId: string;
-    discountRate?: number | null;
-    discountStartTime?: string | null;
-    discountEndTime?: string | null;
-    sales: number;
-    reviewsCount?: number | null;
-    reviewsRating?: number | null;
-    createdAt: string;
-    updatedAt: string;
-  }[];
+// export class ProductListDTO {
+//   list: {
+//     id: string;
+//     name: string;
+//     price: number;
+//     discountPrice?: number | null;
+//     image: string;
+//     content: string;
+//     categoryId: string;
+//     storeId: string;
+//     storeName?: string;
+//     discountRate?: number | null;
+//     discountStartTime?: string | null;
+//     discountEndTime?: string | null;
+//     sales: number;
+//     reviewsCount?: number | null;
+//     reviewsRating?: number | null;
+//     createdAt: string;
+//     updatedAt: string;
+//   }[];
 
-  constructor(products: Product[]) {
-    this.products = products.map((p) => ({
-      id: p.id,
-      name: p.name,
-      price: Number(p.price), // Decimal -> number
-      image: p.image,
-      content: p.content,
-      categoryId: p.categoryId,
-      storeId: p.storeId,
-      discountRate: p.discountRate,
-      discountStartTime: p.discountStartTime
-        ? p.discountStartTime.toISOString()
-        : null,
-      discountEndTime: p.discountEndTime
-        ? p.discountEndTime.toISOString()
-        : null,
-      sales: p.sales,
-      reviewsCount: p.reviewsCount,
-      reviewsRating: p.reviewsRating,
-      createdAt: p.createdAt.toISOString(),
-      updatedAt: p.updatedAt.toISOString(),
-    }));
-  }
-}
-export class ProductListResponseDTO {
-  list: ProductListDTO;
-  totalCount: number;
+//   constructor(products: Product[]) {
+//     this.list = products.map((p) => {
+//       const price = Number(p.price);
+//       const discount = p.discountRate
+//         ? price * (1 - p.discountRate / 100)
+//         : price;
 
-  constructor(products: ProductListDTO, totalCount: number) {
-    this.list = products;
-    this.totalCount = totalCount;
-  }
-}
+//       return {
+//         id: p.id,
+//         name: p.name,
+//         price,
+//         discountPrice: p.discountRate ? Math.round(discount) : null,
+//         image: p.image,
+//         content: p.content,
+//         categoryId: p.categoryId,
+//         storeId: p.storeId,
+//         storeName: p.store.name,
+//         discountRate: p.discountRate,
+//         discountStartTime: p.discountStartTime
+//           ? p.discountStartTime.toISOString()
+//           : null,
+//         discountEndTime: p.discountEndTime
+//           ? p.discountEndTime.toISOString()
+//           : null,
+//         sales: p.sales,
+//         reviewsCount: p.reviewsCount,
+//         reviewsRating: p.reviewsRating,
+//         createdAt: p.createdAt.toISOString(),
+//         updatedAt: p.updatedAt.toISOString(),
+//       };
+//     });
+//   }
+// }
+
+// export class ProductListResponseDTO {
+//   list: ProductListDTO["list"];
+//   totalCount: number;
+
+//   constructor(productList: ProductListDTO, totalCount: number) {
+//     this.list = productList.list;
+//     this.totalCount = totalCount;
+//   }
+// }

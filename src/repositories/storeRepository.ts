@@ -57,16 +57,6 @@ export async function countFavoriteStoreByStoreIdAndUserID(
   });
 }
 
-export async function countMonthFavoriteStore(
-  storeId: string
-): Promise<number> {
-  const thirtyDaysAgo = new Date();
-  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-  return await prisma.favoriteStore.count({
-    where: { AND: [{ storeId }, { createdAt: { gte: thirtyDaysAgo } }] },
-  });
-}
-
 export async function createFavoriteStore(
   data: FavoriteStoreTargetDTO
 ): Promise<FavoriteStore> {
@@ -101,5 +91,23 @@ export async function getProductsWithStocksByStoreId(
     skip: pageSize * (page - 1),
     take: pageSize,
     include: { stocks: true },
+  });
+}
+
+export async function countMonthFavoriteStore(
+  storeId: string
+): Promise<number> {
+  const thirtyDaysAgo = new Date();
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+  return await prisma.favoriteStore.count({
+    where: { AND: [{ storeId }, { createdAt: { gte: thirtyDaysAgo } }] },
+  });
+}
+
+export async function findStoreById(id: string) {
+  return await prisma.store.findUnique({
+    where: {
+      id: id,
+    },
   });
 }

@@ -139,3 +139,7 @@ export async function deleteFavoriteStore(
   );
   return new FavoriteStoreResDTO(favoriteStoreType.delete, store);
 }
+
+export async function getStoreById(storeId: string) {
+  return await storeRepository.findStoreById(storeId);
+}

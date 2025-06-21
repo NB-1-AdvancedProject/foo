@@ -2,14 +2,17 @@ import { RequestHandler } from "express";
 import { create } from "superstruct";
 import {
   CreateProductBodyStruct,
+  PatchProductBodyStruct,
   ProductListParamsStruct,
 } from "../structs/productStructs";
 import productService from "../services/productService";
+import productRepository from "../repositories/productRepository";
+import UnauthError from "../lib/errors/UnauthError";
 
 function parseRequestBody(rawBody: any) {
   return {
     name: rawBody.name,
-    price: Number(rawBody.price),
+    price: rawBody.price !== undefined ? Number(rawBody.price) : undefined,
     content: rawBody.content,
     image: rawBody.image,
     discountRate:
@@ -62,6 +65,19 @@ export const postProduct: RequestHandler = async (req, res) => {
   const data = create(parseRequestBody(req.body), CreateProductBodyStruct);
   const product = await productService.createProduct(data, req.user!.id);
   res.status(201).json(product);
+};
+
+export const patchProduct: RequestHandler = async (req, res) => {
+  const productId = req.params.id;
+  const sellerId = await productService.getSellerIdByProductId(productId);
+  if (sellerId != req.user!.id) {
+    throw new UnauthError();
+  }
+
+  const data = create(parseRequestBody(req.body), PatchProductBodyStruct);
+  const product = await productService.updateProduct(data, productId);
+  console.log(product);
+  res.json(product);
 };
 
 export const deleteProduct: RequestHandler = async (req, res) => {

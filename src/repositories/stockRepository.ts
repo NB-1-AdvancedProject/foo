@@ -1,22 +1,30 @@
 import { Prisma } from "@prisma/client";
 import prisma from "../lib/prisma";
 
-async function createStocks(datas: Prisma.StockCreateInput[]) {
-  return await prisma.$transaction(async (tx) => {
-    const stocks = await Promise.all(
-      datas.map(async (item) => {
-        return await tx.stock.create({
-          data: item,
-          include: {
-            size: true,
-          },
-        });
-      })
-    );
-    return stocks;
+async function createStockTx(
+  tx: Prisma.TransactionClient,
+  data: Prisma.StockCreateInput
+) {
+  return await tx.stock.create({ data });
+}
+
+async function findStocksByProductId(productId: string) {
+  return await prisma.stock.findMany({
+    where: {
+      productId: productId,
+    },
   });
 }
 
+async function updateStockTx(
+  tx: Prisma.TransactionClient,
+  input: { where: Prisma.StockWhereUniqueInput; data: Prisma.StockUpdateInput }
+) {
+  return await tx.stock.update(input);
+}
+
 export default {
-  createStocks,
+  createStockTx,
+  findStocksByProductId,
+  updateStockTx,
 };

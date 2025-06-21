@@ -1,19 +1,15 @@
-import {
-  DetailProductResponseDTO,
-  ProductListDTO,
-  ProductListResponseDTO,
-} from "../lib/dto/productDTO";
-import { StocksReponseDTO } from "../lib/dto/stockDTO";
 import NotFoundError from "../lib/errors/NotFoundError";
 import productRepository from "../repositories/productRepository";
 import {
   CreateProductBody,
+  PatchProductBody,
   ProductListParams,
 } from "../structs/productStructs";
 import * as storeService from "../services/storeService";
 import stockService from "./stockService";
 import BadRequestError from "../lib/errors/BadRequestError";
 import categoryService from "./categoryService";
+import prisma from "../lib/prisma";
 
 async function createProduct(data: CreateProductBody, userId: string) {
   const store = await storeService.getStoreByUserId(userId);
@@ -38,6 +34,7 @@ async function createProduct(data: CreateProductBody, userId: string) {
   };
   const product = await productRepository.create(newData);
   const stocks = await stockService.createStocks(data.stocks, product.id);
+
   return {
     ...product, //밑에있는 모든게 DetailedProductResponseDTO 로 처리필요
     storeId: product.store.id,
@@ -59,7 +56,7 @@ async function createProduct(data: CreateProductBody, userId: string) {
     discountEndTime: product.discountEndTime
       ? product.discountEndTime.toISOString()
       : null,
-    stocks: new StocksReponseDTO(stocks).stocks,
+    stocks: stocks,
     category: [{ name: product.category.name, id: product.category.id }],
   };
 }
@@ -127,7 +124,6 @@ async function getProducts(params: ProductListParams) {
 
   if (params.favoriteStore) {
     if (!whereCondition.store) {
-      //위에있던 switch 문에서 searchBy가 store 기준으로 할경우 여기서 추가적인 검사필요.
       whereCondition.store = {};
     }
     whereCondition.store.likedBy = {
@@ -137,52 +133,105 @@ async function getProducts(params: ProductListParams) {
     };
   }
 
-  const prismaParams = {
-    skip: (params.page - 1) * params.pageSize,
-    take: params.pageSize,
-    where: whereCondition,
-  };
-
-  const products = await productRepository.findAllProducts(prismaParams);
+  // Prisma 정렬 조건 추가
+  let orderBy: any = { createdAt: "desc" }; // 기본값
 
   if (params.sort) {
     switch (params.sort) {
-      case "mostReviewed": // 리뷰 많은 순
-        products.sort((a, b) => (b.reviewsCount || 0) - (a.reviewsCount || 0));
+      case "mostReviewed":
+        orderBy = { reviewsCount: "desc" };
         break;
-
-      case "highRating": // 별점 높은 순
-        products.sort(
-          (a, b) => (b.reviewsRating || 0) - (a.reviewsRating || 0)
-        );
+      case "highRating":
+        orderBy = { reviewsRating: "desc" };
         break;
-
-      case "HighPrice": // 높은 가격 순
-        products.sort((a, b) => Number(b.price) - Number(a.price));
+      case "HighPrice":
+        orderBy = { price: "desc" };
         break;
-
-      case "lowPrice": // 낮은 가격 순
-        products.sort((a, b) => Number(a.price) - Number(b.price));
+      case "lowPrice":
+        orderBy = { price: "asc" };
         break;
-
-      case "recent": // 등록일 순 (최신순)
-        products.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+      case "recent":
+        orderBy = { createdAt: "desc" };
         break;
-
-      case "salesRanking": // 판매순
-        products.sort((a, b) => (b.sales || 0) - (a.sales || 0));
-        break;
-      default: // 기본값은 그냥 최신순
-        products.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+      case "salesRanking":
+        orderBy = { sales: "desc" };
         break;
     }
   }
 
+  const prismaParams = {
+    skip: (params.page - 1) * params.pageSize,
+    take: params.pageSize,
+    where: whereCondition,
+    orderBy,
+    include: {
+      store: true,
+    },
+  };
+
+  const products = await productRepository.findAllProducts(prismaParams);
   const productCount = await productRepository.findAllProductCount(
     prismaParams.where
   );
 
-  return new ProductListResponseDTO(new ProductListDTO(products), productCount);
+  return {
+    list: products,
+    totalCount: productCount,
+  };
+}
+
+async function getproduct(productId: string) {
+  return await productRepository.findProductById(productId);
+}
+
+async function updateProduct(data: PatchProductBody, productId: string) {
+  const newData = {
+    name: data.name || undefined,
+    price: data.price || undefined,
+    content: data.content || undefined,
+    image: data.image || undefined,
+    discountRate: data.discountRate || undefined,
+    discountStartTime: data.discountStartTime || undefined,
+    discountEndTime: data.discountEndTime || undefined,
+  };
+
+  const updatedProduct = await prisma.$transaction(async (tx) => {
+    if (data.stocks) {
+      await stockService.updateStocksForProduct(data.stocks, productId);
+    }
+    return await productRepository.updateProductWithStocks(
+      tx,
+      newData,
+      productId
+    );
+  });
+  return {
+    ...updatedProduct, //밑에있는 모든게 DetailedProductResponseDTO 로 처리필요
+    storeId: updatedProduct.store.id,
+    storeName: updatedProduct.store.name,
+    reviewsRating:
+      updatedProduct.reviews.reduce((acc, review) => acc + review.rating, 0) /
+      (updatedProduct.reviews.length || 1),
+    reviewsCount: updatedProduct.reviews.length,
+    reviews: updatedProduct.reviews,
+    inquiries: updatedProduct.inquiries,
+    discountPrice:
+      Number(updatedProduct.discountRate || 0) > 0
+        ? Number(updatedProduct.price) *
+          (1 - Number(updatedProduct.discountRate || 0) / 100)
+        : Number(updatedProduct.price),
+    discountRate: updatedProduct.discountRate || 0,
+    discountStartTime: updatedProduct.discountStartTime
+      ? updatedProduct.discountStartTime.toISOString()
+      : null,
+    discountEndTime: updatedProduct.discountEndTime
+      ? updatedProduct.discountEndTime.toISOString()
+      : null,
+    stocks: updatedProduct.stocks,
+    category: [
+      { name: updatedProduct.category.name, id: updatedProduct.category.id },
+    ],
+  };
 }
 
 async function deleteProduct(productId: string, userId: string) {
@@ -200,8 +249,22 @@ async function deleteProduct(productId: string, userId: string) {
   await productRepository.deleteById(productId);
 }
 
+async function getSellerIdByProductId(productId: string) {
+  const product = await getproduct(productId);
+  if (!product) {
+    throw new NotFoundError("product", productId);
+  }
+  const store = await storeService.getStoreById(product.storeId);
+  if (!store) {
+    throw new NotFoundError("store", product.storeId);
+  }
+  return store.userId;
+}
+
 export default {
   createProduct,
   getProducts,
+  updateProduct,
   deleteProduct,
+  getSellerIdByProductId,
 };
