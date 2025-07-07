@@ -65,6 +65,21 @@ jobs:
         with:
           node-version: "lts/*" # 또는 프로젝트에 필요한 Node.js 버전
 
+      - name: Set up Python #  Python 환경 설정
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Create Python Virtual Environment #  Python 가상 환경 생성
+        run: |
+          python -m venv venv
+          source venv/bin/activate
+
+      - name: Install Python dependencies #  Python 의존성 설치
+        run: |
+          source venv/bin/activate
+          pip install -r requirements.txt
+
       - name: Install dependencies
         run: npm install # 프로젝트 의존성 설치
       - name: Apply DB Schema

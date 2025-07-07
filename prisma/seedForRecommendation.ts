@@ -1,117 +1,7 @@
-// import prisma from "../src/lib/prisma";
-// async function main() {
-//   // --- 1. BUYER 유저 생성 ---
-//   const buyer = await prisma.user.upsert({
-//     where: { email: "buyer@example.com" },
-//     update: {},
-//     create: {
-//       email: "buyer@example.com",
-//       password: "hashedpassword",
-//       name: "테스트구매자",
-//       type: "BUYER",
-//     },
-//   });
-
-//   // --- 2. SELLER 유저 생성 ---
-//   const seller = await prisma.user.upsert({
-//     where: { email: "seller@example.com" },
-//     update: {},
-//     create: {
-//       email: "seller@example.com",
-//       password: "hashedpassword",
-//       name: "테스트판매자",
-//       type: "SELLER",
-//     },
-//   });
-
-//   // --- 3. SELLER의 Store 생성 ---
-//   const store = await prisma.store.upsert({
-//     where: { userId: seller.id },
-//     update: {},
-//     create: {
-//       name: "테스트스토어",
-//       address: "서울시 강남구 어딘가",
-//       phoneNumber: "010-1234-5678",
-//       content: "테스트 스토어 설명입니다.",
-//       userId: seller.id,
-//     },
-//   });
-
-//   // --- 4. 카테고리 생성 ---
-//   const category = await prisma.category.upsert({
-//     where: { name: "의류" },
-//     update: {},
-//     create: {
-//       name: "의류",
-//       description: "테스트 의류 카테고리",
-//     },
-//   });
-
-//   // --- 5. 상품(Product) 생성 ---
-//   const product = await prisma.product.create({
-//     data: {
-//       name: "테스트 상품",
-//       price: 10000,
-//       image: "https://via.placeholder.com/150",
-//       content: "테스트용 상품입니다.",
-//       categoryId: category.id,
-//       storeId: store.id,
-//     },
-//   });
-
-//   // 6. Size 생성
-//   const existingSize = await prisma.size.findFirst({
-//     where: { size: "M" },
-//   });
-
-//   const size = existingSize
-//     ? existingSize
-//     : await prisma.size.create({ data: { size: "M" } });
-
-//   // --- 7. 재고 등록 ---
-//   await prisma.stock.create({
-//     data: {
-//       productId: product.id,
-//       sizeId: size.id,
-//       quantity: 10,
-//     },
-//   });
-
-//   // --- 8. 장바구니 생성 ---
-//   const cart = await prisma.cart.upsert({
-//     where: { userId: buyer.id },
-//     update: {},
-//     create: {
-//       userId: buyer.id,
-//     },
-//   });
-
-//   // --- 9. 장바구니에 상품 추가 ---
-//   await prisma.cartItem.create({
-//     data: {
-//       cartId: cart.id,
-//       productId: product.id,
-//       sizeId: size.id,
-//       quantity: 1,
-//     },
-//   });
-
-//   console.log("✅ 시드 데이터 생성 완료!");
-// }
-
-// main()
-//   .then(async () => await prisma.$disconnect())
-//   .catch(async (e) => {
-//     console.error(e);
-//     await prisma.$disconnect();
-//     process.exit(1);
-//   });
-
 import prisma from "../src/lib/prisma";
-import { Prisma } from "@prisma/client"; // PrismaClientKnownRequestError 타입을 위해 추가
 
 async function main() {
-  console.log("🚀 시드 데이터 생성 시작...");
+  console.log("추천용 시드 데이터 생성 시작...");
 
   // --- 1. BUYER 유저 생성 (여러 명) ---
   const buyer1 = await prisma.user.upsert({
@@ -437,7 +327,6 @@ async function main() {
   });
 
   // 추가적인 카트 아이템 시나리오: 기존 카트에 다른 상품들을 추가하여 패턴 강화
-  // (예: 티셔츠와 이어폰을 구매한 buyer2가 나중에 벨트도 추가 구매했다고 가정)
   await prisma.cartItem.createMany({
     data: [
       {
@@ -465,7 +354,7 @@ async function main() {
     skipDuplicates: true,
   });
 
-  console.log("✅ 시드 데이터 생성 완료!");
+  console.log("추천용 시드 데이터 생성 완료!");
 }
 
 main()
