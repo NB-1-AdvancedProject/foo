@@ -1,0 +1,20 @@
+server: # tempo 서버 자체 설정
+  http_listen_port: 3200 # tempo가 HTTP 요청을 수신할 포트 번호 (여기서는 3000번 포트)
+distributor: # 트레이싱 데이터를 수신하고 처리하는 역할
+  receivers: # Tempo가 외부에서 데이터를 받을 때 어떤 프로토콜으로 받을지 설정
+    otlp: # OpenTelemetry Protocol (OTLP)기반으로 데이터 받음
+      protocols: # 어떤 방식으로 받을지(여기서는 grpc 와 http 둘 다 허용)
+        grpc:
+          endpoint: 0.0.0.0:4317
+
+ingester: {}
+
+compactor: # 저장된 데이터의 관리 및 압축
+  compaction: # 데이터 보관기간
+    block_retention: 48h
+
+storage: # 트레이싱 데이터를 저장하는 방식 설정
+  trace: # 트레이싱 데이터 저장소 설정
+    backend: local # 로컬 파일 시스템 사용
+    local: # 데이터 저장 경로
+      path: /tmp/tempo/traces

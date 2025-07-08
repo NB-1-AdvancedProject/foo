@@ -1,3 +1,6 @@
+import "./utils/logger";
+
+import "./utils/tracing";
 import app from "./app";
 import { connectRedis } from "./lib/redis";
 

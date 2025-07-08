@@ -1,0 +1,28 @@
+global:
+  scrape_interval: 15s # 모든 타겟에서 메트릭 수집 주기 15초
+  evaluation_interval: 15s # 경보/규칙 평가 주기 15초
+
+rule_files:
+  - "alert.rules.yml"
+
+alerting: # Prometheus가 Alertmanager에 경보(알림)를 전송할 때 사용하는 설정입니다.
+  alertmanagers: # alertmanager 서버 목록
+    - static_configs: # 고정된 alertmanager 주소 설정
+        - targets: ["alertmanager:9093"] # alertmanager 컨테이너의 9093 포트로 알림 전송
+
+scrape_configs: # 프로메테우스가 데이터를 수집할 타겟 목록
+  - job_name: "prometheus"
+    static_configs:
+      - targets: ["localhost:9090"]
+
+  - job_name: "loki"
+    static_configs:
+      - targets: ["loki:3100"]
+
+  - job_name: "tempo"
+    static_configs:
+      - targets: ["tempo:3200"]
+
+  - job_name: "node-exporter"
+    static_configs:
+      - targets: ["node-exporter:9100"]

@@ -1,0 +1,46 @@
+auth_enabled: false
+# 인증 기능 비활성화 (테스트 환경 등에서 주로 사용)
+server:
+  http_listen_port: 3100
+# HTTP 요청을 받을 포트 설정
+ingester: # 로그 데이터 수집 및 처리 설정
+  lifecycler: # 인제스터(데이터 수집자) 링 설정
+    ring:
+      kvstore:
+        store: inmemory # 링 메타데이터 저장 방식(inmemory:메모리)
+      replication_factor: 1 # 복제 개수 (1 -> 단일 인스턴스)
+    final_sleep: 0s # 종료 전 대기 시간
+  chunk_idle_period: 5m # 비활성 청크를 닫기까지 기다리는 시간
+  chunk_retain_period: 30s # 청크 유지 시간
+  wal:
+    dir: /tmp/loki/wal
+
+schema_config: # 인덱스 및 스키마 버전 설정
+  configs:
+    - from: 2020-10-24 # 시작시점
+      store: boltdb-shipper # 인덱스 메타데이터 저장소
+      object_store: filesystem # 로그 청크 저장소
+      schema: v11 # loki 스키마 버전
+      index:
+        prefix: index_ # 인덱스 파일명 접두사
+        period: 24h # 인덱스 생성 주기 (24h -> 하루)
+
+storage_config: # 저장소 경로 설정
+  boltdb_shipper: # 인덱스 관리 디렉토리 설정
+    active_index_directory: /tmp/loki/index
+    cache_location: /tmp/loki/cache
+  filesystem: # 로그 청크 파일 저장 디렉토리
+    directory: /tmp/loki/chunks
+
+limits_config: # 데이터 수집 제한 및 유효성 검사 설정
+  reject_old_samples: true # 오래된 샘플 거부 여부
+  reject_old_samples_max_age: 168h # 거부 기준 시간 (일주일)
+  allow_structured_metadata: false
+
+query_range: # 쿼리 동작 설정
+  align_queries_with_step: true # 스텝 크기에 맞춰 정렬
+  max_retries: 5 # 실패 시 재시도 횟수
+  parallelise_shardable_queries: true # 분할 가능한 쿼리 병렬 처리 활성화
+
+frontend: # 쿼리 프론트엔드 제한 설정
+  max_outstanding_per_tenant: 1000 # 한 테넌트당 동시에 처리 가능한 쿼리 수 제한

@@ -1,0 +1,19 @@
+apiVersion: 1
+# Grafana 프로비저닝 파일의 api 버전 (고정 값으로 쓰면 됨)
+
+datasources: # 그라파나에 등록할 데이터 소스 리스트
+  - name: Prometheus
+    type: prometheus
+    access: proxy # 그라파나 서버가 프록시 역할 데이터소스로 직접 HTTP 요청 보내는 방식
+    url: http://prometheus:9090
+    isDefault: true # 그라파나 대시보드에서 기본 데이터소스로 사용
+
+  - name: Loki
+    type: loki
+    access: proxy
+    url: http://loki:3100
+
+  - name: Tempo
+    type: tempo
+    access: proxy
+    url: http://tempo:3200

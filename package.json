@@ -16,6 +16,11 @@
   "description": "",
   "dependencies": {
     "@aws-sdk/client-s3": "^3.832.0",
+    "@opentelemetry/api": "^1.9.0",
+    "@opentelemetry/exporter-trace-otlp-http": "^0.202.0",
+    "@opentelemetry/instrumentation-express": "^0.51.0",
+    "@opentelemetry/instrumentation-http": "^0.202.0",
+    "@opentelemetry/sdk-node": "^0.202.0",
     "@prisma/client": "^6.9.0",
     "bcrypt": "^6.0.0",
     "dotenv": "^16.5.0",
@@ -29,7 +34,8 @@
     "passport-local": "^1.0.0",
     "passport-naver": "^1.0.6",
     "redis": "^5.5.6",
-    "superstruct": "^2.0.2"
+    "superstruct": "^2.0.2",
+    "winston": "^3.17.0"
   },
   "devDependencies": {
     "@types/bcrypt": "^5.0.2",
@@ -44,6 +50,7 @@
     "@types/passport-naver": "^1.0.4",
     "@types/supertest": "^6.0.3",
     "@types/swagger-ui-express": "^4.1.8",
+    "@types/winston": "^2.4.4",
     "@types/yamljs": "^0.2.34",
     "aws-sdk-client-mock": "^4.1.0",
     "aws-sdk-client-mock-jest": "^4.1.0",

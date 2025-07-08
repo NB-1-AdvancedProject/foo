@@ -1,37 +1,127 @@
+version: "3.8"
+
 services:
   server:
-    image: hyentaejang/advancedproject
     build:
-      tags:
-        - advancedproject
-      args:
-        - NODE_VERSION=20.18.0
-      dockerfile: Dockerfile
-      pull: true
       context: .
-    container_name: codeit_advancedproject_container
+      dockerfile: Dockerfile
+      args:
+        NODE_VERSION: 20.13.1
+    container_name: app-server
+    ports:
+      - "3000:3000"
     environment:
       - SERVER_PORT=3000
       - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:${POSTGRES_DB_PORT}/${POSTGRES_DB}?schema=public
       - NODE_ENV=production
+    depends_on:
+      - db
     networks:
-      - network-advancedproject
+      - observability-net
 
   db:
     image: postgres
+    container_name: app-db
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB}
     ports:
       - "${POSTGRES_DB_PORT}:5432"
-    networks:
-      - network-advancedproject
     volumes:
-      - postgres-advancedproject-data:/var/lib/postgresql/data
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - observability-net
 
+  grafana:
+    image: grafana/grafana-oss:latest
+    ports:
+      - "3001:3000"
+    volumes:
+      - ./observability/grafana/provisioning:/etc/grafana/provisioning
+    depends_on:
+      - prometheus
+      - loki
+      - tempo
+    networks:
+      - observability-net
+
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./observability/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./observability/prometheus/alert.rules.yml:/etc/prometheus/alert.rules.yml
+    networks:
+      - observability-net
+
+  alertmanager:
+    image: prom/alertmanager:latest
+    ports:
+      - "9093:9093"
+    volumes:
+      - ./observability/alertmanager/config.yml:/etc/alertmanager/alertmanager.yml
+    networks:
+      - observability-net
+
+  loki:
+    image: grafana/loki:latest
+    ports:
+      - "3100:3100"
+    command: -config.file=/etc/loki/config.yml
+    volumes:
+      - ./observability/loki/config.yml:/etc/loki/config.yml
+      - ./observability/loki:/var/loki
+    networks:
+      - observability-net
+
+  tempo:
+    image: grafana/tempo:latest
+    ports:
+      - "3200:3200"
+      - "4317:4317"
+    command: -config.file=/etc/tempo/tempo.yaml
+    volumes:
+      - ./observability/tempo/tempo.yaml:/etc/tempo/tempo.yaml
+    networks:
+      - observability-net
+
+  promtail:
+    image: grafana/promtail:latest
+    container_name: promtail
+    volumes:
+      - c:/logs:/logs # windows 경로
+      - ./observability/promtail/config.yaml:/etc/promtail/config.yaml
+    command: -config.file=/etc/promtail/config.yaml
+    restart: unless-stopped # 컨테이너가 중지되지 않는 한 자동으로 재시작
+    depends_on:
+      - loki
+    networks:
+      - observability-net
+
+  grafana-agent:
+    image: grafana/agent:latest
+    container_name: grafana-agent
+    volumes:
+      - ./observability/agent/agent.yaml:/etc/agent.yaml
+    command: -config.file=/etc/agent.yaml
+    ports:
+      - "4319:4319"
+      - "12345:12345"
+    networks:
+      - observability-net
+
+  node-exporter:
+    image: prom/node-exporter
+    container_name: node-exporter
+    ports:
+      - "9100:9100"
+    networks:
+      - observability-net
+  # node-exporter는 cpu, 메모리, 디스크, 네트워크 등 서버의 하드웨어/시스템 상태를 프로메테우스가 수집 할 수 있게 해주는 에이언트입니다.
 networks:
-  network-advancedproject:
+  observability-net:
 
 volumes:
-  postgres-advancedproject-data:
+  postgres-data:

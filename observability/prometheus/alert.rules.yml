@@ -1,0 +1,28 @@
+groups: # 경보 규칙을 묶는 그룹 리스트
+  - name: example-alerts # 그룹 이름
+    rules: # 해당 그룹 안의 경보 규칙 리스트
+      - alert: HighCPUUsage # 경보 이름
+        expr: process_cpu_seconds_total > 0.5 # 경보 발생 조건
+        for: 10s # 조건이 10초 이상 지속되면 경보 발생
+        labels: # 경보에 붙는 레이블 -> 여기서 삼각도를 warning으로 설정
+          severity: warning
+        annotations: # 추가 정보 -> 메시지, 설명 등 -> slack, 이메일 등에서 이 내용 표시
+          description: "CPU 사용률이 50%를 초과했습니다."
+
+      - alert: AlwaysFiring
+        expr: vector(1)
+        for: 10s
+        labels:
+          severity: warning
+        annotations:
+          summary: "항상 발생하는 테스트 경보"
+          description: "이 경보는 테스트용으로 항상 발생합니다."
+
+      - alert: TestSlackAlert
+        expr: vector(1)
+        for: 5s
+        labels:
+          severity: warning
+        annotations:
+          summary: "슬랙 테스트 경보"
+          description: "이것은 슬랙 알림 테스트입니다."

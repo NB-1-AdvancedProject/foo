@@ -1,0 +1,18 @@
+server:
+  log_level: info # 로그 레벨 (info/ debug/ error 등)
+
+metrics:
+  wal_directory: /tmp/agent/wal # 저장 경로
+  # 메트릭 데이터를 디스크에 임시 저장하기 위한 디렉토리
+
+traces: # 분산 트레이싱 수집 설정
+  configs: # 여러 트레이스 설정을 배열로 지원함
+    - name: default
+      receivers: # 수신 받는 포트 프로토콜 설정
+        otlp:
+          protocols:
+            http:
+              endpoint: 0.0.0.0:4319 # 외부에서 이 포트로 들어오는 http 기반 otlp 트레이스 수신
+      remote_write: # 수신한 트레이스를 외부로 전송할 대상
+        - endpoint: tempo:4317
+          insecure: true # TLS 없이 전송

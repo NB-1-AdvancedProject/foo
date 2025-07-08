@@ -1,0 +1,16 @@
+global:
+  resolve_timeout: 5m
+# 알림이 해제 상태로 전환된 후 그 상태를 수신자에게 전달할 때까지 기다리는 시간
+route:
+  receiver: "slack-notifier"
+# 기본 경보를 전달할 대상의 이름
+receivers:
+  - name: "slack-notifier"
+    slack_configs:
+      - send_resolved: true # 알림이 해결된 경우에도 전송
+        channel: "#code-it-project" # 알림을 보낼 채널 이름
+        username: "Prometheus Alert"
+        title: "{{ .CommonAnnotations.description}}" # 슬랙 메시지의 제목 알림마다 공통된 description annotation 사용
+        text: "{{ range .Alerts}}*{{ .Labels.alertname }}* - {{ .Annotations.description}}\n{{ end }}"
+        # 본문 메시지 여러 알림을 반복 출력
+        api_url: "https://hooks.slack.com/services/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"

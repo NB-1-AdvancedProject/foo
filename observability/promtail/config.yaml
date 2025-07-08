@@ -1,0 +1,31 @@
+server:
+  http_listen_port: 9080 # 프롬테일이 http 서버를 9080 포트로 실행
+  grpc_listen_port: 0 # gRPC 서버는 사용하지 않음
+
+positions:
+  filename: /etc/promtail/positions.yaml
+# 프롬테일이 로그를 어디까지 읽었는지 추적하는 파일
+# 이 파일이 있어야 프롬테일이 재시작 후 중복 없이 이어서 수집할 수 있음
+# 이 설정에 따라 컨테이너 내부에서 /etc/promtail/positions.yaml 파일에 저장됨
+clients:
+  - url: http://loki:3100/loki/api/v1/push
+  # 로그를 전송할 Loki 서버의 주소
+  # loki:3100은 도커-compose 내에서 loki 컨테이너 이름과 포트
+  # 이 주소로 promtail이 로그 데이터를 push 방식으로 전송
+
+scrape_configs:
+  - job_name: windowslogs # 이 로그 수집 설정의 이름
+    static_configs:
+      - targets:
+          - localhost # 필수는 아닌데 prometheus-style 설정을 맞추기 위해 localhost로 둠
+        labels:
+          job: windowslogs # 로그 라벨에 job=windowslogs를 붙임 그라파나에서 쿼리할 때 사용 가능
+          __path__: /logs/*.log
+          # 실제로 수집할 로그 파일 경로
+          # 도커 호스트의 디렉토리가 도커 컨테이너 안에서 logs로 마운트 된다고 가정\
+          # 즉 c:logs/test.log => /logs/test.log => promtail이 수집
+# 요약
+# 1. /logs/*.log 경로의 로그 파일을 읽고
+# 2. job=windowslogs 라벨을 붙여서
+# 3. loki 서버로 전송
+# 4. grafana -> loki -> {job ="windowslogs"}로 쿼리해서 확인 가능
